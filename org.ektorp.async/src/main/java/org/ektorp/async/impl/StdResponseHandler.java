@@ -1,13 +1,5 @@
 package org.ektorp.async.impl;
 
-import java.io.IOException;
-
-import org.ektorp.DbAccessException;
-import org.ektorp.DocumentNotFoundException;
-import org.ektorp.UpdateConflictException;
-import org.ektorp.http.HttpStatus;
-import org.xml.sax.ErrorHandler;
-
 import com.ning.http.client.AsyncHandler;
 import com.ning.http.client.HttpResponseBodyPart;
 import com.ning.http.client.HttpResponseHeaders;
@@ -20,7 +12,7 @@ import com.ning.http.client.HttpResponseStatus;
  */
 public class StdResponseHandler<T> implements AsyncHandler<T> {
 
-	private ResponseHandler responseHandler;
+	private AsyncResponseHandler responseHandler;
 	
 	@Override
 	public void onThrowable(Throwable t) {
@@ -38,7 +30,7 @@ public class StdResponseHandler<T> implements AsyncHandler<T> {
 	public com.ning.http.client.AsyncHandler.STATE onStatusReceived(
 			HttpResponseStatus responseStatus) throws Exception {
 		if (responseStatus.getStatusCode() < 300) {
-			responseHandler = new AsyncErrorhandler(responseStatus);
+			responseHandler = new AsyncErrorHandler(responseStatus);
 		}
 		return null;
 	}

@@ -2,9 +2,9 @@ package org.ektorp.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -66,12 +66,10 @@ public class QueryResultParser<T> {
 			if (totalRows == 0) {
 				rows = Collections.emptyList();
 				return;
-			} else {
-				rows = new ArrayList<T>(totalRows);
 			}
-		} else {
-			rows = new ArrayList<T>();
 		}
+		
+		rows = new LinkedList<T>();
 
 		ParseState state = new ParseState();
 
