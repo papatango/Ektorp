@@ -12,7 +12,12 @@ import com.ning.http.client.HttpResponseStatus;
  */
 public class StdResponseHandler<T> implements AsyncHandler<T> {
 
-	private AsyncResponseHandler responseHandler;
+	private AsyncResponseHandler<T> responseHandler;
+	private final AsyncResponseHandler<T> successHandler;
+	
+	public StdResponseHandler(AsyncResponseHandler<T> successHandler) {
+		this.successHandler = successHandler;
+	}
 	
 	@Override
 	public void onThrowable(Throwable t) {
@@ -23,6 +28,7 @@ public class StdResponseHandler<T> implements AsyncHandler<T> {
 	public com.ning.http.client.AsyncHandler.STATE onBodyPartReceived(
 			HttpResponseBodyPart bodyPart) throws Exception {
 		bodyPart.writeTo(responseHandler.getBodyStream());
+		
 		return STATE.CONTINUE;
 	}
 
@@ -30,9 +36,11 @@ public class StdResponseHandler<T> implements AsyncHandler<T> {
 	public com.ning.http.client.AsyncHandler.STATE onStatusReceived(
 			HttpResponseStatus responseStatus) throws Exception {
 		if (responseStatus.getStatusCode() < 300) {
-			responseHandler = new AsyncErrorHandler(responseStatus);
+			responseHandler = new AsyncErrorHandler<T>(responseStatus);
+		} else {
+			responseHandler = successHandler;
 		}
-		return null;
+		return com.ning.http.client.AsyncHandler.STATE.CONTINUE;
 	}
 
 	protected STATE onError(HttpResponseStatus responseStatus) {
@@ -42,13 +50,12 @@ public class StdResponseHandler<T> implements AsyncHandler<T> {
 	@Override
 	public com.ning.http.client.AsyncHandler.STATE onHeadersReceived(
 			HttpResponseHeaders headers) throws Exception {
-		return null;
+		return com.ning.http.client.AsyncHandler.STATE.CONTINUE;
 	}
 
 	@Override
 	public T onCompleted() throws Exception {
-		responseHandler.onCompleted();
-		return null;
+		return responseHandler.onCompleted();
 	}
 
 }
