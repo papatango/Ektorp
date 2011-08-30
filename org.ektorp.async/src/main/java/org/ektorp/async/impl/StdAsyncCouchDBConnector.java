@@ -5,6 +5,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.Future;
 
+import org.codehaus.jackson.map.ObjectMapper;
 import org.ektorp.DbPath;
 import org.ektorp.async.AsyncCouchDBConnector;
 import org.ektorp.http.URI;
@@ -22,6 +23,7 @@ public class StdAsyncCouchDBConnector implements AsyncCouchDBConnector {
 	private final AsyncHttpClient httpClient;
 	private final String dbName;
 	private URI dbURI;
+	private ObjectMapper mapper = new ObjectMapper();
 	
 	public StdAsyncCouchDBConnector(String databaseName) {
 		 this(databaseName, new AsyncHttpClient());
@@ -41,8 +43,7 @@ public class StdAsyncCouchDBConnector implements AsyncCouchDBConnector {
 	
 	@Override
 	public <T> Future<T> get(Class<T> c, String id) {
-		// TODO Auto-generated method stub
-		return null;
+		return get(id, new StdResponseHandler<T>(new ObjectMappingResponseHandler<T>(c, mapper)));
 	}
 
 	@Override
