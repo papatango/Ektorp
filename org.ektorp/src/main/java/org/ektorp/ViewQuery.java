@@ -23,17 +23,17 @@ import org.ektorp.util.Exceptions;
  */
 public class ViewQuery {
 
-	private final static ObjectMapper DEFAULT_MAPPER = new StdObjectMapperFactory().createObjectMapper();
-	private final static String ALL_DOCS_VIEW_NAME = "_all_docs";
+	protected final static ObjectMapper DEFAULT_MAPPER = new StdObjectMapperFactory().createObjectMapper();
+	protected final static String ALL_DOCS_VIEW_NAME = "_all_docs";
 	private final static int NOT_SET = -1;
 
 	private final Map<String, String> queryParams = new TreeMap<String, String>();
 
-	private ObjectMapper mapper;
+	protected ObjectMapper mapper;
 	
-	private String dbPath;
-	private String designDocId;
-	private String viewName;
+	protected String dbPath;
+	protected String designDocId;
+	protected String viewName;
     private Object key;
     private Keys keys;
 	private Object startKey;
@@ -55,7 +55,7 @@ public class ViewQuery {
 	private boolean cacheOk = false;
 	
 	private String cachedQuery;
-	private String listName;
+	protected String listName;
 
 	public ViewQuery() {
 		mapper = DEFAULT_MAPPER;
@@ -672,6 +672,10 @@ public class ViewQuery {
 			uri.append(designDocId).append("_list").append(listName).append(viewName);
 		} else if (ALL_DOCS_VIEW_NAME.equals(viewName)) {
 			uri.append(viewName);
+			//geocouch support: if the query name is "spatial"...append without "_view" since the function is by
+			//definition outside of any view -Ppaul Torres
+		} else if (viewName.contentEquals("spatial")){
+			uri.append(designDocId).append("_spatial/");
 		} else {
 			assertHasText(designDocId, "designDocId");
 			uri.append(designDocId).append("_view").append(viewName);
@@ -679,7 +683,7 @@ public class ViewQuery {
 		return uri;
 	}
 
-	private void assertHasText(String s, String fieldName) {
+	protected void assertHasText(String s, String fieldName) {
 		if (s == null || s.length() == 0) {
 			throw new IllegalStateException(String.format("%s must have a value", fieldName));
 		}
@@ -689,7 +693,7 @@ public class ViewQuery {
 		return i != NOT_SET;
 	}
 
-	private boolean isNotEmpty(Object s) {
+	protected boolean isNotEmpty(Object s) {
 		return s != null;
 	}
 
