@@ -1,0 +1,36 @@
+/* beta code for support geocouch extension of couchdb--works with couchdb 1.1.0 extended with geocouch (see https://github.com/couchbase/geocouch)
+Specific unit tests were not made for this spatial support yet--but existing unit tests survived these changes for the 
+modified classes and one or 2 others that consume them.
+Example use --with random bounding box--may or may not encompass any of your documents of course and a design doc called 
+  "_design/mydoc", and spatial is the default location for the spatial functionality from the geocouch project.
+*/
+ViewQuery qv = new ViewQuery()
+                  .designDocId("_design/mydoc")
+                  .viewName("spatial")
+                  .queryParam("points?bbox", "-72.994870,39.752960,-22.994860,89.752970");
+
+//from wich we can do several things: read the response as a raw json response
+    InputStream data = db.queryForStream(qv);
+    byte b[] = new byte[1000]; //I knew about how long my response was going to be...this was just to show myself the string
+    try {
+      data.read(b);
+        System.out.println(new String(b));     
+    } catch (IOException e) {
+      System.out.println("Couldnt handle it");
+      System.exit(2);
+    }
+//or as a list of document ids with which to fetch the results...include docs is not an option to my knowledge with
+//the geocouch spatial function--or not easily, so this indirect route of fetching with ids is the only way to do it for now
+    ViewResult result = db.queryView(qv);
+    List<T> results = new ArrayList();
+    for(ViewResult.Row row : result.getRows()) {
+      //String stringValue = row.getValue();  //dont need this
+      String id = row.getId();
+      int intValue = row.getValueAsInt();
+      results.add(db.get(T.class, id));
+      //just show ourselves what we're finding as we go along
+      System.out.println("Found: " + id + " at row: " + intValue);
+    }
+    //actually get the documents using the ids
+    System.out.println("List of instantiated results has " + results.size() + " elements.");
+
