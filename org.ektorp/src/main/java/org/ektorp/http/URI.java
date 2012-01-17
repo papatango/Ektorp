@@ -75,14 +75,6 @@ public class URI {
 		}
 		try {
 			params().append(name).append("=").append(URLEncoder.encode(value, "UTF-8"));
-			//geocouch support:
-			//if the queryparam is specific to a bounding box query (by definition
-			//not within a view) then we need to go back and remove the first "?"
-			//character from our param string just before the word "points" -Paul Torres
-			if(params().toString().contains("?points")){
-				String fixed = this.params.toString().replace("?points", "points");
-				params = new StringBuilder(fixed);
-			}
 		} catch (UnsupportedEncodingException e) {
 			throw Exceptions.propagate(e);
 		}

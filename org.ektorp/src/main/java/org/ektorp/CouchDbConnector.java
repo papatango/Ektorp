@@ -310,6 +310,13 @@ public interface CouchDbConnector {
     ViewResult queryView(ViewQuery query);
 
     /**
+     * GeoCouch support
+     * @param query
+     * @return
+     */
+    ViewResult querySpatial(ViewSpatial query);
+
+    /**
      * Please note that the StreamingViewResult need to be closed after usage.
      * 
      * @param query

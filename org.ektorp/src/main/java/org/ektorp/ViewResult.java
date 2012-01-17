@@ -27,6 +27,15 @@ public class ViewResult implements Iterable<ViewResult.Row>, Serializable {
 	public ViewResult(JsonNode resultNode, boolean ignoreNotFound) {
 		this.ignoreNotFound = ignoreNotFound;
         Assert.notNull(resultNode, "resultNode may not be null");
+        //if node has no rows but only a count field (from a geocouch spatial 
+        //bbox search using count=true query parameter) then construct a single
+        //row response with only a count field within it...bit of a hack
+        //and better not try to access the other non-existent properties
+        if(resultNode.has("count")){
+        	rows = new ArrayList<ViewResult.Row>(1);
+        	rows.add((new Row(resultNode)));
+        	return;
+        }
 		Assert.isTrue(resultNode.findPath("rows").isArray(), "result must contain 'rows' field of array type");
 		if (resultNode.get(TOTAL_ROWS_FIELD_NAME) != null) {
 			totalRows = resultNode.get(TOTAL_ROWS_FIELD_NAME).getIntValue();
@@ -126,6 +135,8 @@ public class ViewResult implements Iterable<ViewResult.Row>, Serializable {
 		static final String KEY_FIELD_NAME = "key";
 		static final String DOC_FIELD_NAME = "doc";
 		static final String ERROR_FIELD_NAME = "error";
+		//geocouch support
+		static final String COUNT = "count";
 		private final JsonNode rowNode;
 		
 		@JsonCreator
@@ -135,6 +146,11 @@ public class ViewResult implements Iterable<ViewResult.Row>, Serializable {
 			if (getError() != null) {
 				throw new ViewResultException(getKeyAsNode(), getError());
 			}
+		}
+		//geocouch support
+		public String getCount(){
+			//not .getTextValue()
+			return rowNode.get(COUNT).getValueAsText();
 		}
 		
 		public String getId() {

@@ -34,6 +34,7 @@ import org.ektorp.UpdateConflictException;
 import org.ektorp.UpdateHandlerRequest;
 import org.ektorp.ViewQuery;
 import org.ektorp.ViewResult;
+import org.ektorp.ViewSpatial;
 import org.ektorp.changes.ChangesCommand;
 import org.ektorp.changes.ChangesFeed;
 import org.ektorp.changes.DocumentChange;
@@ -448,6 +449,29 @@ public class StdCouchDbConnector implements CouchDbConnector {
         
         return executeQuery(query, rh);
     }
+    
+    /**
+     * For GeoCouch support.
+     */
+    public ViewResult querySpatial(final ViewSpatial query) {
+        Assert.notNull(query, "query cannot be null");
+        query.dbPath(dbURI.toString());
+        ResponseCallback<ViewResult> rh = new StdResponseHandler<ViewResult>() {
+            @Override
+            public ViewResult success(HttpResponse hr) throws Exception {
+                return new ViewResult(objectMapper.readTree(hr.getContent()), 
+                		query.isIgnoreNotFound());
+            }
+        };
+        return executeSpatialQuery(query, rh);
+    }
+    /**
+     * For GeoCouch support.
+     */
+	private <T> T executeSpatialQuery(final ViewSpatial query,
+			ResponseCallback<T> rh) {
+		return restTemplate.get(query.buildQuery(), rh);
+	}
 
     @Override
     public StreamingViewResult queryForStreamingView(ViewQuery query) {
