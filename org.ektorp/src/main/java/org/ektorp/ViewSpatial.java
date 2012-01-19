@@ -28,15 +28,15 @@ public class ViewSpatial {
 	private static String spatialfunction = "_spatial";
 	//save us the trouble of making this variable...please always name your 
 	//spatial function as per example provided in the geocouch example
-	private static String sptialfunctioname = "points";
+	private static String spatialfunctioname = "points";
 	private int limit = NOT_SET;
 	private String staleOk;
 	private int skip = NOT_SET;
 	private boolean count = false;
 	private boolean ignoreNotFound = true;
-	private String bboxpoints = "0,0,0,0";
-
-	
+	private String bboxpoints = "";//"0,0,0,0";
+	//default plane-bounds for use with gps coordinates
+	private String planebounds = null; //"-180,-90,180,90";	
 	private String cachedQuery;
 	private String listName;
 
@@ -99,7 +99,7 @@ public class ViewSpatial {
 		reset();
 		listName = s;
 		return this;
-	}
+	}	
 	/**
 	 * Convenience manner of setting the bounding box using a string instead of
 	 * accessing 4 settersTry to add checks for proper input some other time.
@@ -153,13 +153,13 @@ public class ViewSpatial {
 		return this;
 	}
 */	
-/*	private JsonNode parseJson(String s) {
-		try {
-			return mapper.readTree(s);
-		} catch (Exception e) {
-			throw Exceptions.propagate(e);
-		}
-	}*/
+	public String getPlanebounds() {
+		return planebounds;
+	}
+	public ViewSpatial setPlanebounds(String planebounds) {
+		this.planebounds = planebounds;
+		return this;
+	}
 
 	/**
 	 * limit=0 you don't get any data, but all meta-data for this View. The 
@@ -182,7 +182,10 @@ public class ViewSpatial {
 	 */
 	public ViewSpatial staleOk(boolean b) {
 		reset();
-		staleOk = b ? "ok" : null;
+		if(b)
+			staleOk = "ok";
+		else
+			staleOk = null;
 		return this;
 	}
 
@@ -217,23 +220,39 @@ public class ViewSpatial {
 		}
 		URI query = buildViewPath();
 		//first add bounding box and 4 points, then rest of possible params
-		//if no bbox is provided we will get back all the docs in the couchdb
-		//as per 
-		query.param(boundingboxparameter, bboxfourpoints());
-		
-		if (hasValue(limit)) {
-			query.param("limit", limit);
-		}
-		if (staleOk != null) {
-			query.param("stale", staleOk);
-		}
-		if (hasValue(skip)) {
-			query.param("skip", skip);
-		}
+		//if no bbox is provided we will get back an error for 1.1.x and
+		//we will get back all docs in geocouch for couchdb 1.2.x
+		if(this.bboxpoints !=null && this.bboxpoints.length()>0)
+			query.param(boundingboxparameter, this.bboxfourpoints());
+		else
+			throw new IllegalStateException("A bounding box must be provided " +
+					"for any spatial query.");
+		//certain combinations of these parameters are non-sensical...
+		//ONLY STALE & COUNT are supported by geocouch for couchdb 1.1.x
+		//but it is ok to include the other paramters as they are merely
+		//ignored if not supported
 		if (count == true){
 			query.param("count", "true");
+			if (staleOk != null) {
+				query.param("stale", staleOk);
+			}
+			if (planebounds != null && planebounds.length()>0){
+				query.param("plane_bounds", planebounds);
+			}
+		} else {
+			if (hasValue(limit)) {
+				query.param("limit", limit);
+			}
+			if (staleOk != null) {
+				query.param("stale", staleOk);
+			}
+			if (hasValue(skip)) {
+				query.param("skip", skip);
+			}
+			if (planebounds != null && planebounds.length()>0){
+				query.param("plane_bounds", planebounds);
+			}
 		}
-
 		cachedQuery = query.toString();
 		return cachedQuery;
 	}
@@ -243,7 +262,23 @@ public class ViewSpatial {
 		URI uri = URI.of(dbPath);
 		assertHasText(designDocId, "designDocId");
 		// 							_spatial/ 				points
-		uri.append(designDocId).append(spatialfunction).append(sptialfunctioname);
+		uri.append(designDocId).append(spatialfunction).append(spatialfunctioname);
+		return uri;
+	}
+	
+	public String buildCompactSpatialIndexes() {
+		URI compaction = buildCompactionPath();
+		return compaction.toString();
+	}
+	
+	private URI buildCompactionPath(){
+		//Compaction of spatial indexes is per Design Document as per geocouch
+		assertHasText(dbPath, "dbPath");
+		URI uri = URI.of(dbPath);
+		assertHasText(designDocId, "designDocId");
+		///_compact' -H 'Content-Type: application/json'
+		uri.append(designDocId).append(spatialfunction)
+		.append("_compact -H 'Content-Type:application/json");
 		return uri;
 	}
 
@@ -317,5 +352,4 @@ public class ViewSpatial {
 	public boolean isIgnoreNotFound() {
 		return ignoreNotFound;
 	}
-	
 }
