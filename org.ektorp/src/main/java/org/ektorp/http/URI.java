@@ -4,8 +4,14 @@ import java.io.*;
 import java.net.*;
 import java.util.Map;
 
+import org.ektorp.Spatial_type;
 import org.ektorp.util.*;
-
+/**
+ * Modified to overload the params method so we can do geometry=POLYGON or 
+ * some other type in future.
+ * @author Paul Torres (modifications only)
+ *
+ */
 public class URI {
 
 	private final StringBuilder path;
@@ -42,7 +48,8 @@ public class URI {
 	}
 
 	public URI copy() {
-		return params != null ? new URI(new StringBuilder(path), new StringBuilder(params)) : new URI(new StringBuilder(path));
+		return params != null ? new URI(new StringBuilder(path), 
+		    new StringBuilder(params)) : new URI(new StringBuilder(path));
 	}
 	
 	public URI append(String pathElement) {
@@ -63,25 +70,76 @@ public class URI {
 		uri = null;
 		return this;
 	}
-	
-	public URI param(String name, String value) {
+	/**
+	 * The original method
+	 * @param name
+	 * @param value
+	 * @return
+	 */
+	 public URI param(String name, String value) {
+	    if (prototype) {
+	      return copy().param(name, value);
+	    }
+	    if (params != null) {
+	      params().append("&");
+	    } else {
+	      params().append("?");
+	    }
+	    try {
+	      params().append(name).append("=").append(
+	          URLEncoder.encode(value, "UTF-8"));
+	    } catch (UnsupportedEncodingException e) {
+	      throw Exceptions.propagate(e);
+	    }
+	    uri = null;
+	    return this;
+	  }
+
+	/**
+	 * Overloaded and modified to support geocouch spatial args which need 
+	 * special handling. For now only the geometry=POLYGON and bbox searches are
+	 * supported, but more changes could support other types, although polygon
+	 * searches really are the most popular outside of bounding boxes.
+	 * @param name
+	 * @param value
+	 * @return
+	 * Paul Torres
+	 */
+	public URI param(String name, String value, Spatial_type t) {
 		if (prototype) {
 			return copy().param(name, value);
 		}
-		if (params != null) {
-			params().append("&");
+		//params must be null...nonsensical otherwise to specify 2 polygons or 
+		//bboxes although this would never happen anyway...
+		if(params != null) {
+		  throw new IllegalStateException("Cannot specify more than 1 set of " +
+		  		"coordinates for spatial searches.");
 		} else {
 			params().append("?");
 		}
-		try {
-			params().append(name).append("=").append(URLEncoder.encode(value, "UTF-8"));
-		} catch (UnsupportedEncodingException e) {
-			throw Exceptions.propagate(e);
-		}
-		uri = null;
-		return this;
+		
+		StringBuilder sb = new StringBuilder(value);
+    if(name.contentEquals("geometry")){
+      sb.insert(0, (t.get_type_as_String() + "(("));
+      sb.append("))");
+      try {
+        params().append(name).append("=").append(
+            URLEncoder.encode(sb.toString(), "UTF-8"));
+      } catch (UnsupportedEncodingException e) {
+        throw Exceptions.propagate(e);
+      }
+    } else if(name.contentEquals("bbox")) {		
+      try {
+        params().append(name).append("=").append(
+            URLEncoder.encode(value, "UTF-8"));
+      } catch (UnsupportedEncodingException e) {
+        throw Exceptions.propagate(e);
+      }
+    }
+    uri = null;
+    return this;
 	}
-	
+
 	public URI param(String name, int value) {
 		return param(name, Integer.toString(value));
 	}
@@ -100,7 +158,8 @@ public class URI {
 	@Override
 	public String toString() {
 		if (uri == null) {
-			uri = params != null ? path.append(params).toString() : path.toString(); 
+			uri = params != null ? path.append(params).toString() : 
+			  path.toString(); 
 		}
 		return uri;
 	}
