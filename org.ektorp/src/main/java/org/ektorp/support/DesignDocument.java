@@ -12,8 +12,9 @@ import org.ektorp.util.Assert;
 /**
  * Representation of a CouchDb design document.
  * 
- * Design documents can contain fields currently not handled by Ektorp, such as update handlers and validators. These
- * fields are still accessible through the methods getAnonymous() and setAnonymous(String key, Object value)
+ * Design documents can contain fields currently not handled by Ektorp, such as
+ * update handlers and validators. These fields are still accessible through the
+ * methods getAnonymous() and setAnonymous(String key, Object value)
  * 
  * @author henrik lundgren
  * 
@@ -24,8 +25,10 @@ public class DesignDocument extends OpenCouchDbDocument {
 
     public final static String ID_PREFIX = "_design/";
     private final static String DEFAULT_LANGUAGE = "javascript";
-    public static final String AUTO_UPDATE_VIEW_ON_CHANGE = "org.ektorp.support.AutoUpdateViewOnChange";
-    public static final String UPDATE_ON_DIFF = "org.ektorp.support.UpdateDesignDocOnDiff";
+    public static final String AUTO_UPDATE_VIEW_ON_CHANGE = "org.ektorp." +
+    		"support.AutoUpdateViewOnChange";
+    public static final String UPDATE_ON_DIFF = "org.ektorp.support." +
+    		"UpdateDesignDocOnDiff";
 
     private Map<String, View> views;
     private Map<String, String> lists;
@@ -183,12 +186,15 @@ public class DesignDocument extends OpenCouchDbDocument {
         boolean changed = mergeViews(dd.views(), updateOnDiff);
         changed = mergeFunctions(lists(), dd.lists(), updateOnDiff) || changed;
         changed = mergeFunctions(shows(), dd.shows(), updateOnDiff) || changed;
-        changed = mergeFunctions(filters(), dd.filters(), updateOnDiff) || changed;
-        changed = mergeFunctions(updates(), dd.updates(), updateOnDiff) || changed;
+        changed = mergeFunctions(filters(), dd.filters(), updateOnDiff) || 
+            changed;
+        changed = mergeFunctions(updates(), dd.updates(), updateOnDiff) || 
+            changed;
         return changed;
     }
 
-    private boolean mergeFunctions(Map<String, String> existing, Map<String, String> mergeFunctions,
+    private boolean mergeFunctions(Map<String, String> existing, Map<String, 
+        String> mergeFunctions,
             boolean updateOnDiff) {
         boolean changed = false;
         for (Map.Entry<String, String> e : mergeFunctions.entrySet()) {
@@ -208,7 +214,8 @@ public class DesignDocument extends OpenCouchDbDocument {
         return changed;
     }
 
-    private boolean mergeViews(Map<String, View> mergeViews, boolean updateOnDiff) {
+    private boolean mergeViews(Map<String, View> mergeViews, 
+        boolean updateOnDiff) {
         boolean changed = false;
         for (Map.Entry<String, DesignDocument.View> e : mergeViews.entrySet()) {
             String name = e.getKey();
@@ -228,7 +235,8 @@ public class DesignDocument extends OpenCouchDbDocument {
     }
 
     private boolean updateOnDiff() {
-        return Boolean.getBoolean(AUTO_UPDATE_VIEW_ON_CHANGE) || Boolean.getBoolean(UPDATE_ON_DIFF);
+        return Boolean.getBoolean(AUTO_UPDATE_VIEW_ON_CHANGE) || 
+            Boolean.getBoolean(UPDATE_ON_DIFF);
     }
 
     /**

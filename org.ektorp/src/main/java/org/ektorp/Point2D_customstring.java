@@ -10,11 +10,11 @@ import java.awt.geom.Point2D;
  * @author Paul Torres
  *
  */
-class Point2D_customstring extends Point2D.Double {
+public class Point2D_customstring extends Point2D.Double {
 
   private static final long serialVersionUID = 1L;
 
-  Point2D_customstring(double a, double b){
+  public Point2D_customstring(double a, double b){
     super(a,b);
   }
   /**
