@@ -259,6 +259,11 @@ public class ViewSpatial {
       break;
 
     case polygon:
+      //zero points is not ok
+      if(points.size()==0 || points == null){
+        throw new IllegalStateException("Polygon searches require a set of " +
+            "points.");
+      }
       //any number of points is ok so long as the first and last are equal
       Point2D.Double first = points.get(0);
       Point2D.Double last = points.get(points.size()-1);
@@ -285,12 +290,13 @@ public class ViewSpatial {
     //first add bounding box and 4 points / polygon search points, then rest 
     //of possible params. If no bbox is provided we will get back an error 
     //for 1.1.x and we will get back all docs in geocouch for couchdb 1.2.x
-/*if(this.bbox_or_poly_points !=null && this.bbox_or_poly_points.length()>0)
+    /*if(this.bbox_or_poly_points !=null && this.bbox_or_poly_points.length()>0)
 query.param(spatial_search_type.get_type_as_String(), this.spatial_query_points());
 else
 throw new IllegalStateException("A bounding box must be provided " +
 		"for any spatial query.");
-*/		//certain combinations of these parameters are non-sensical...
+     */
+    //certain combinations of these parameters are non-sensical...
     //ONLY STALE & COUNT are supported by geocouch for couchdb 1.1.x
     //but it is ok to include the other paramters as they are merely
     //ignored if not supported. Support should be added in future but unsure
@@ -345,7 +351,7 @@ throw new IllegalStateException("A bounding box must be provided " +
     .append("_compact -H 'Content-Type:application/json");
     return uri;
   }
-  
+
   public String buildCleanupSpatialIndexes() {
     URI cleanup = buildCleanupPath();
     return cleanup.toString();
@@ -359,7 +365,7 @@ throw new IllegalStateException("A bounding box must be provided " +
   private URI buildCleanupPath(){
     assertHasText(dbPath, "dbPath");
     URI uri = URI.of(dbPath)
-    .append("_spatial_cleanup -H 'Content-Type:application/json");
+        .append("_spatial_cleanup -H 'Content-Type:application/json");
     return uri;
 
   }

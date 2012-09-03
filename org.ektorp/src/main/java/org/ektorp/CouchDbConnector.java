@@ -4,7 +4,6 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
 import org.ektorp.changes.ChangesCommand;
 import org.ektorp.changes.ChangesFeed;
 import org.ektorp.changes.DocumentChange;
@@ -570,6 +569,14 @@ public interface CouchDbConnector {
      * Commits any recent changes to the specified database to disk.
      */
     void ensureFullCommit();
+
+    /**
+     * For Geocouch support
+     * @param squery
+     * @param type
+     * @return
+     */
+    <T> List<T> querySpatial(ViewSpatial squery, Class<T> type);
 
     
 

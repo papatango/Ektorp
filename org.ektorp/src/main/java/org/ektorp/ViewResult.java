@@ -8,9 +8,14 @@ import org.codehaus.jackson.annotate.*;
 import org.ektorp.util.*;
 
 /**
- * 
  * @author henrik lundgren
- *
+ * <p>
+ * Added support for 2 special kinds of responses: totally reduced views of the
+ * form: {"rows":[{"key":null,"value":0}]}, and reduced spatial views of the 
+ * form: {"count":0}. Subclassing wouldn't work as far as I could see, nor would
+ * the creation of 2 additional classes, even though I thought the latter 
+ * desireable. 
+ * Paul Torres
  */
 public class ViewResult implements Iterable<ViewResult.Row>, Serializable {
 
@@ -25,17 +30,19 @@ public class ViewResult implements Iterable<ViewResult.Row>, Serializable {
     private final boolean ignoreNotFound;
 	
 	public ViewResult(JsonNode resultNode, boolean ignoreNotFound) {
+	  //System.out.println("json resultnode:" + resultNode.toString());
 		this.ignoreNotFound = ignoreNotFound;
         Assert.notNull(resultNode, "resultNode may not be null");
         //if node has no rows but only a count field (from a geocouch spatial 
-        //bbox search using count=true query parameter) then construct a single
+        //search using count=true query parameter) then construct a single
         //row response with only a count field within it...bit of a hack
         //and better not try to access the other non-existent properties
         if(resultNode.has("count")){
+          //System.out.print("resultNode has 'count' within it.");
         	rows = new ArrayList<ViewResult.Row>(1);
-        	rows.add((new Row(resultNode)));
+        	rows.add(new Row(resultNode));
         	return;
-        }
+        }       
 		Assert.isTrue(resultNode.findPath("rows").isArray(), "result must contain 'rows' field of array type");
 		if (resultNode.get(TOTAL_ROWS_FIELD_NAME) != null) {
 			totalRows = resultNode.get(TOTAL_ROWS_FIELD_NAME).getIntValue();
@@ -56,6 +63,21 @@ public class ViewResult implements Iterable<ViewResult.Row>, Serializable {
 		        rows.add(new Row(n)); 		        
 		    } 
 		}
+	}
+	
+	/**
+	 * Get the value in the only row--presumes this response was of the form of
+	 * a totally reduced view like so: {"rows":[{"key":null,"value":0}]} or 
+	 * {"count":0} from a geospatial search (using geocouch extension), 
+	 * otherwise it is non-sensical. Client code must know what it is doing or 
+	 * else you'll get IllegalStateException. 
+	 * @return 
+	 */
+	public int getCount(){
+	  if(rows.size()>1)
+	    throw new IllegalStateException();
+	  else
+	    return rows.get(0).getCountasInt();   
 	}
 	
 	public List<Row> getRows() {
@@ -147,11 +169,16 @@ public class ViewResult implements Iterable<ViewResult.Row>, Serializable {
 				throw new ViewResultException(getKeyAsNode(), getError());
 			}
 		}
-		//geocouch support
+		//geocouch support--specifically for count=true results of the form 
+		//{"count":0}
 		public String getCount(){
-			//not .getTextValue()
 			return rowNode.get(COUNT).getValueAsText();
 		}
+        //geocouch support--specifically for count=true results of the form 
+		//{"count":0}
+        public int getCountasInt(){
+            return rowNode.get(COUNT).getIntValue();
+        }
 		
 		public String getId() {
 			return rowNode.get(ID_FIELD_NAME).getTextValue();

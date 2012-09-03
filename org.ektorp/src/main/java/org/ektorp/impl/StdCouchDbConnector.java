@@ -404,6 +404,21 @@ public class StdCouchDbConnector implements CouchDbConnector {
 
         return executeQuery(query, rh);
     }
+    /**
+     * For Geocouch support...untested. Easier for me to just get docs with ids
+     * than to create a function that emits all the fields needed to instantiate
+     * the objects from json
+     */
+    @Override
+    public <T> List<T> querySpatial(final ViewSpatial squery, final Class<T> type) {
+      Assert.notNull(squery, "spatial query may not be null");
+      squery.dbPath(dbURI.toString());
+      EmbeddedDocViewResponseHandler<T> rh = new EmbeddedDocViewResponseHandler<T>(
+          type, objectMapper, squery.isIgnoreNotFound());
+      return executeQuery(squery, rh);
+    }
+    
+    
 
 	private <T> T executeQuery(final ViewQuery query,
 			ResponseCallback<T> rh) {
@@ -415,6 +430,14 @@ public class StdCouchDbConnector implements CouchDbConnector {
 		return query.hasMultipleKeys() ? restTemplate.post(query.buildQuery(),
                 query.getKeysAsJson(), rh) : restTemplate.get(
                 query.buildQuery(), rh);
+	}
+	
+	/**
+	 * For Geocouch support
+	 */
+	private <T> T executeQuery(final ViewSpatial squery,
+	    ResponseCallback<T> rh) {
+	  return restTemplate.get(squery.buildQuery(), rh);
 	}
 
     @Override
