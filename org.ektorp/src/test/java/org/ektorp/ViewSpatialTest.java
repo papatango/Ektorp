@@ -14,7 +14,8 @@ public class ViewSpatialTest {
   ViewSpatial spatial = new ViewSpatial()
   .dbPath("/somedb/")
   .designDocId("_design/doc")
-  .setBoundingBoxPoints(new Point2D_customstring(0,0), new Point2D_customstring(1,1));
+  .setBoundingBoxPoints(new Point2D_customstring(0,0), 
+      new Point2D_customstring(1,1));
 
   @Test(expected=java.lang.IllegalStateException.class)
   public void no_boundingbox_exception() {
@@ -142,7 +143,8 @@ public class ViewSpatialTest {
         .buildQuery();
     System.out.println(url);
     //( -> %28       ) -> %29       , -> %2C
-    assertTrue(contains(url, "?geometry=POLYGON%28%281.0+1.0%2C1.0+-1.0%2C-1.0+-1.0%2C-1.0+1.0%2C1.0+1.0%29%29"));
+    assertTrue(contains(url, "?geometry=POLYGON%28%281.0+1.0%2C1.0+-1.0%2C-1.0" +
+    		"+-1.0%2C-1.0+1.0%2C1.0+1.0%29%29"));
   }
 
 
